@@ -1,10 +1,11 @@
 <?php
 // Database configuration
-// Update these values to match your MySQL setup
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'moviebook');
+// CS Server MySQL connection details
+define('DB_HOST', 'mysql01.cs.virginia.edu');  // CS server hostname
+define('DB_USER', 'qzp2wv');        // computing ID
+define('DB_PASS', 'Fall2025');   // CS MySQL password
+define('DB_NAME', 'qzp2wv');        // computing ID
+
 
 // Create database connection
 function getDBConnection() {
@@ -14,6 +15,9 @@ function getDBConnection() {
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
         }
+        
+        // Set charset to UTF-8
+        $conn->set_charset("utf8mb4");
         
         return $conn;
     } catch (Exception $e) {

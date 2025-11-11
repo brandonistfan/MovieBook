@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $conn = getDBConnection();
         
         // Check if email already exists
-        $checkQuery = "SELECT user_id FROM users WHERE email = ?";
+        $checkQuery = "SELECT userId FROM users WHERE email = ?";
         $stmt = $conn->prepare($checkQuery);
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -95,4 +95,3 @@ include 'includes/header.php';
 </div>
 
 <?php include 'includes/footer.php'; ?>
-

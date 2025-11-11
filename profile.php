@@ -1,21 +1,21 @@
 <?php
 require_once 'config/database.php';
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['userId'])) {
     header('Location: login.php');
     exit;
 }
 
 $pageTitle = "Profile";
 $conn = getDBConnection();
-$userId = $_SESSION['user_id'];
+$userId = $_SESSION['userId'];
 
 // Get user's reviews
-$reviewsQuery = "SELECT r.review_id, r.review_text, r.created_at, m.movie_id, m.title
+$reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, m.movieId, m.title
                  FROM reviews r
-                 JOIN movies m ON r.movie_id = m.movie_id
-                 WHERE r.user_id = ?
-                 ORDER BY r.created_at DESC";
+                 JOIN movies m ON r.movieId = m.movieId
+                 WHERE r.userId = ?
+                 ORDER BY r.createdAt DESC";
 $stmt = $conn->prepare($reviewsQuery);
 $stmt->bind_param("i", $userId);
 $stmt->execute();
@@ -51,13 +51,13 @@ include 'includes/header.php';
                     <?php foreach ($reviews as $review): ?>
                         <div class="review-card">
                             <div class="review-header">
-                                <a href="movie.php?id=<?php echo urlencode($review['movie_id']); ?>" class="review-movie-link">
+                                <a href="movie.php?id=<?php echo urlencode($review['movieId']); ?>" class="review-movie-link">
                                     <strong><?php echo htmlspecialchars($review['title']); ?></strong>
                                 </a>
-                                <span class="review-date"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></span>
+                                <span class="review-date"><?php echo date('F j, Y', strtotime($review['createdAt'])); ?></span>
                             </div>
                             <div class="review-text">
-                                <?php echo nl2br(htmlspecialchars($review['review_text'])); ?>
+                                <?php echo nl2br(htmlspecialchars($review['reviewText'])); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -75,4 +75,3 @@ include 'includes/header.php';
 $conn->close();
 include 'includes/footer.php';
 ?>
-

@@ -1,22 +1,24 @@
 <?php
 require_once 'config/database.php';
 
-if (!isset($_GET['id'])) {
+$movieId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($movieId <= 0) {
     header('Location: index.php');
     exit;
 }
 
-$movieId = $_GET['id'];
 $conn = getDBConnection();
 
 // Get movie details
-$movieQuery = "SELECT m.movie_id, m.title, m.year, m.runtime, m.genres,
-               COALESCE(r.rating, 0) as rating, COALESCE(r.votes, 0) as votes
+$movieQuery = "SELECT m.movieId, m.title, m.description,
+               COALESCE(AVG(r.rating), 0) AS rating,
+               COUNT(r.ratingId) AS votes
                FROM movies m
-               LEFT JOIN ratings r ON m.movie_id = r.movie_id
-               WHERE m.movie_id = ?";
+               LEFT JOIN ratings r ON m.movieId = r.movieId
+               WHERE m.movieId = ?
+               GROUP BY m.movieId, m.title, m.description";
 $stmt = $conn->prepare($movieQuery);
-$stmt->bind_param("s", $movieId);
+$stmt->bind_param("i", $movieId);
 $stmt->execute();
 $movieResult = $stmt->get_result();
 $movie = $movieResult->fetch_assoc();
@@ -30,10 +32,10 @@ $pageTitle = $movie['title'];
 
 // Get directors
 $directorsQuery = "SELECT p.name FROM movie_directors md
-                   JOIN people p ON md.person_id = p.person_id
-                   WHERE md.movie_id = ?";
+                   JOIN people p ON md.personId = p.personId
+                   WHERE md.movieId = ?";
 $stmt = $conn->prepare($directorsQuery);
-$stmt->bind_param("s", $movieId);
+$stmt->bind_param("i", $movieId);
 $stmt->execute();
 $directorsResult = $stmt->get_result();
 $directors = [];
@@ -43,11 +45,11 @@ while ($row = $directorsResult->fetch_assoc()) {
 
 // Get actors
 $actorsQuery = "SELECT p.name FROM movie_actors ma
-                JOIN people p ON ma.person_id = p.person_id
-                WHERE ma.movie_id = ?
+                JOIN people p ON ma.personId = p.personId
+                WHERE ma.movieId = ?
                 LIMIT 10";
 $stmt = $conn->prepare($actorsQuery);
-$stmt->bind_param("s", $movieId);
+$stmt->bind_param("i", $movieId);
 $stmt->execute();
 $actorsResult = $stmt->get_result();
 $actors = [];
@@ -56,9 +58,11 @@ while ($row = $actorsResult->fetch_assoc()) {
 }
 
 // Get genres
-$genresQuery = "SELECT genre FROM movie_genres WHERE movie_id = ?";
+$genresQuery = "SELECT g.genreName AS genre FROM movie_genres mg
+                JOIN genres g ON mg.genreId = g.genreId
+                WHERE mg.movieId = ?";
 $stmt = $conn->prepare($genresQuery);
-$stmt->bind_param("s", $movieId);
+$stmt->bind_param("i", $movieId);
 $stmt->execute();
 $genresResult = $stmt->get_result();
 $genres = [];
@@ -67,26 +71,26 @@ while ($row = $genresResult->fetch_assoc()) {
 }
 
 // Get reviews
-$reviewsQuery = "SELECT r.review_id, r.review_text, r.created_at, u.username
+$reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username
                  FROM reviews r
-                 JOIN users u ON r.user_id = u.user_id
-                 WHERE r.movie_id = ?
-                 ORDER BY r.created_at DESC";
+                 JOIN users u ON r.userId = u.userId
+                 WHERE r.movieId = ?
+                 ORDER BY r.createdAt DESC";
 $stmt = $conn->prepare($reviewsQuery);
-$stmt->bind_param("s", $movieId);
+$stmt->bind_param("i", $movieId);
 $stmt->execute();
 $reviewsResult = $stmt->get_result();
 $reviews = [];
 while ($row = $reviewsResult->fetch_assoc()) {
-    $reviews[] = $row;
+$reviews[] = $row;
 }
 
 // Check if user has already reviewed this movie
 $userHasReviewed = false;
-if (isset($_SESSION['user_id'])) {
-    $checkQuery = "SELECT review_id FROM reviews WHERE movie_id = ? AND user_id = ?";
+if (isset($_SESSION['userId'])) {
+    $checkQuery = "SELECT reviewId FROM reviews WHERE movieId = ? AND userId = ?";
     $stmt = $conn->prepare($checkQuery);
-    $stmt->bind_param("si", $movieId, $_SESSION['user_id']);
+    $stmt->bind_param("ii", $movieId, $_SESSION['userId']);
     $stmt->execute();
     $checkResult = $stmt->get_result();
     $userHasReviewed = $checkResult->num_rows > 0;
@@ -104,12 +108,8 @@ include 'includes/header.php';
             <div class="movie-details">
                 <h1><?php echo htmlspecialchars($movie['title']); ?></h1>
                 
-                <?php if ($movie['year']): ?>
-                    <p class="movie-meta"><strong>Year:</strong> <?php echo htmlspecialchars($movie['year']); ?></p>
-                <?php endif; ?>
-                
-                <?php if ($movie['runtime']): ?>
-                    <p class="movie-meta"><strong>Runtime:</strong> <?php echo htmlspecialchars($movie['runtime']); ?> minutes</p>
+                <?php if (!empty($movie['description'])): ?>
+                    <p class="movie-description"><?php echo nl2br(htmlspecialchars($movie['description'])); ?></p>
                 <?php endif; ?>
                 
                 <?php if (!empty($directors)): ?>
@@ -135,7 +135,7 @@ include 'includes/header.php';
                 <?php if ($movie['rating'] > 0): ?>
                     <div class="movie-rating-large">
                         <span class="rating-value-large">⭐ <?php echo number_format($movie['rating'], 1); ?></span>
-                        <span class="rating-votes">(<?php echo number_format($movie['votes']); ?> votes)</span>
+                        <span class="rating-votes">(<?php echo number_format($movie['votes']); ?> ratings)</span>
                     </div>
                 <?php else: ?>
                     <div class="movie-rating-large no-rating">No ratings yet</div>
@@ -155,13 +155,13 @@ include 'includes/header.php';
                 <div class="alert alert-success"><?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></div>
             <?php endif; ?>
             
-            <?php if (isset($_SESSION['user_id'])): ?>
+            <?php if (isset($_SESSION['userId'])): ?>
                 <?php if (!$userHasReviewed): ?>
                     <div class="review-form-container">
                         <h3>Write a Review</h3>
                         <form action="submit_review.php" method="POST" class="review-form">
-                            <input type="hidden" name="movie_id" value="<?php echo htmlspecialchars($movieId); ?>">
-                            <textarea name="review_text" rows="5" placeholder="Share your thoughts about this movie..." required></textarea>
+                            <input type="hidden" name="movieId" value="<?php echo htmlspecialchars($movieId); ?>">
+                            <textarea name="reviewText" rows="5" placeholder="Share your thoughts about this movie..." required></textarea>
                             <button type="submit" class="btn btn-primary">Submit Review</button>
                         </form>
                     </div>
@@ -182,10 +182,10 @@ include 'includes/header.php';
                         <div class="review-card">
                             <div class="review-header">
                                 <strong><?php echo htmlspecialchars($review['username']); ?></strong>
-                                <span class="review-date"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></span>
+                                <span class="review-date"><?php echo date('F j, Y', strtotime($review['createdAt'])); ?></span>
                             </div>
                             <div class="review-text">
-                                <?php echo nl2br(htmlspecialchars($review['review_text'])); ?>
+                                <?php echo nl2br(htmlspecialchars($review['reviewText'])); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -203,4 +203,3 @@ include 'includes/header.php';
 $conn->close();
 include 'includes/footer.php';
 ?>
-

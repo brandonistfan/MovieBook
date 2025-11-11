@@ -1,69 +1,122 @@
-CREATE DATABASE moviebook;
+CREATE DATABASE qzp2wv;
 
-USE moviebook;
-CREATE TABLE users
-   (username VARCHAR(255) NOT NULL,
+USE qzp2wv;
+
+CREATE TABLE users (
+    username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    user_id INT NOT NULL AUTO_INCREMENT,
-    PRIMARY KEY(user_id));
-CREATE TABLE movies
-    (movie_id VARCHAR(20) NOT NULL,
-     title VARCHAR(255) NOT NULL,
-     year INT,
-     runtime INT,
-     genres VARCHAR(255),
-     PRIMARY KEY(movie_id));
-CREATE TABLE reviews
-    (review_id INT NOT NULL AUTO_INCREMENT,
-     review_text TEXT NOT NULL,
-     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-     movie_id VARCHAR(20) NOT NULL,
-     user_id INT NOT NULL,
-     PRIMARY KEY(review_id),
-     FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-     FOREIGN KEY(user_id) REFERENCES users(user_id),
-     UNIQUE (user_id, movie_id)); -- One review per user per movie
-CREATE TABLE ratings
-    (movie_id VARCHAR(20) NOT NULL,
-     rating DECIMAL(3,1) NOT NULL,
-     votes INT NOT NULL,
-     PRIMARY KEY(movie_id),
-     FOREIGN KEY(movie_id) REFERENCES movies(movie_id));
-CREATE TABLE people
-    (person_id VARCHAR(20) NOT NULL,
-     name VARCHAR(255) NOT NULL,
-     birth_year INT,
-     death_year INT,
-     PRIMARY KEY(person_id));
-CREATE TABLE studios
-    (studio_id INT NOT NULL AUTO_INCREMENT,
-     studio_name VARCHAR(255) NOT NULL UNIQUE,
-     PRIMARY KEY(studio_id));
-CREATE TABLE genres
-    (genre VARCHAR(255) NOT NULL,
-     PRIMARY KEY(genre));
-CREATE TABLE movie_actors
-    (movie_id VARCHAR(20) NOT NULL,
-     person_id VARCHAR(20) NOT NULL,
-     PRIMARY KEY(movie_id, person_id),
-     FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-     FOREIGN KEY(person_id) REFERENCES people(person_id));
-CREATE TABLE movie_directors
-    (movie_id VARCHAR(20) NOT NULL,
-     person_id VARCHAR(20) NOT NULL,
-     PRIMARY KEY(movie_id, person_id),
-     FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-     FOREIGN KEY(person_id) REFERENCES people(person_id));
-CREATE TABLE movie_studios
-    (movie_id VARCHAR(20) NOT NULL,
-     studio_id INT NOT NULL,
-     PRIMARY KEY(movie_id, studio_id),
-     FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-     FOREIGN KEY(studio_id) REFERENCES studios(studio_id));
-CREATE TABLE movie_genres
-    (movie_id VARCHAR(20) NOT NULL,
-     genre VARCHAR(255) NOT NULL,
-     PRIMARY KEY(movie_id, genre),
-     FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-     FOREIGN KEY(genre) REFERENCES genres(genre));
+    userId INT NOT NULL AUTO_INCREMENT,
+    PRIMARY KEY (userId)
+);
+
+CREATE TABLE movies (
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    movieId INT NOT NULL AUTO_INCREMENT,
+    PRIMARY KEY (movieId)
+);
+
+CREATE TABLE reviews (
+    reviewId INT NOT NULL AUTO_INCREMENT,
+    reviewText TEXT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    movieId INT NOT NULL,
+    userId INT NOT NULL,
+    PRIMARY KEY (reviewId),
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (userId) REFERENCES users(userId),
+    UNIQUE (userId, movieId)  -- One review per user per movie
+);
+
+CREATE TABLE ratings (
+    ratingId INT NOT NULL AUTO_INCREMENT,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 10),  -- Double check 1-5 or 1-10
+    movieId INT NOT NULL,
+    userId INT NOT NULL,
+    PRIMARY KEY (ratingId),
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (userId) REFERENCES users(userId)
+);
+
+CREATE TABLE writes (
+    userId INT NOT NULL,
+    reviewId INT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(userId),
+    FOREIGN KEY (reviewId) REFERENCES reviews(reviewId),
+    PRIMARY KEY (reviewId)
+);
+
+CREATE TABLE creates (
+    userId INT NOT NULL,
+    ratingId INT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(userId),
+    FOREIGN KEY (ratingId) REFERENCES ratings(ratingId),
+    PRIMARY KEY (ratingId)
+);
+
+CREATE TABLE has (
+    movieId INT NOT NULL,
+    reviewId INT NOT NULL,
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (reviewId) REFERENCES reviews(reviewId),
+    PRIMARY KEY (reviewId)
+);
+
+CREATE TABLE possesses (
+    movieId INT NOT NULL,
+    ratingId INT NOT NULL,
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (ratingId) REFERENCES ratings(ratingId),
+    PRIMARY KEY (ratingId)
+);
+
+CREATE TABLE people (
+    personId INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (personId)
+);
+
+CREATE TABLE studios (
+    studioId INT NOT NULL AUTO_INCREMENT,
+    studioName VARCHAR(255) NOT NULL UNIQUE,
+    PRIMARY KEY (studioId)
+);
+
+CREATE TABLE genres (
+    genreId INT NOT NULL AUTO_INCREMENT,
+    genreName VARCHAR(255) NOT NULL UNIQUE,
+    PRIMARY KEY (genreId)
+);
+
+CREATE TABLE movie_actors (
+    movieId INT NOT NULL,
+    personId INT NOT NULL,
+    PRIMARY KEY (movieId, personId),
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (personId) REFERENCES people(personId)
+);
+
+CREATE TABLE movie_directors (
+    movieId INT NOT NULL,
+    personId INT NOT NULL,
+    PRIMARY KEY (movieId, personId),
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (personId) REFERENCES people(personId)
+);
+
+CREATE TABLE movie_studios (
+    movieId INT NOT NULL,
+    studioId INT NOT NULL,
+    PRIMARY KEY (movieId, studioId),
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (studioId) REFERENCES studios(studioId)
+);
+
+CREATE TABLE movie_genres (
+    movieId INT NOT NULL,
+    genreId INT NOT NULL,
+    PRIMARY KEY (movieId, genreId),
+    FOREIGN KEY (movieId) REFERENCES movies(movieId),
+    FOREIGN KEY (genreId) REFERENCES genres(genreId)
+);

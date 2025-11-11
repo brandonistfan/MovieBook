@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'Please fill in all fields.';
     } else {
         $conn = getDBConnection();
-        $query = "SELECT user_id, username, email, password FROM users WHERE email = ?";
+        $query = "SELECT userId, username, email, password FROM users WHERE email = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // In production, use password_verify() with hashed passwords
             // For now, assuming passwords are stored as plain text (you should hash them)
             if ($password === $user['password'] || password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['userId'] = $user['userId'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
                 header('Location: index.php');
@@ -77,4 +77,3 @@ include 'includes/header.php';
 </div>
 
 <?php include 'includes/footer.php'; ?>
-
