@@ -1,0 +1,92 @@
+<?php
+require_once 'config/database.php';
+
+$pageTitle = "Search Movies";
+$conn = getDBConnection();
+$results = [];
+$searchTerm = '';
+$hasSearched = false;
+
+if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
+    $searchTerm = trim($_GET['q']);
+    $hasSearched = true;
+    
+    $query = "SELECT m.movie_id, m.title, m.year, m.runtime, m.genres,
+              COALESCE(r.rating, 0) as rating, COALESCE(r.votes, 0) as votes
+              FROM movies m
+              LEFT JOIN ratings r ON m.movie_id = r.movie_id
+              WHERE m.title LIKE ? OR m.genres LIKE ?
+              ORDER BY r.rating DESC, m.title ASC
+              LIMIT 50";
+    
+    $searchPattern = '%' . $searchTerm . '%';
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ss", $searchPattern, $searchPattern);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $results[] = $row;
+    }
+}
+
+include 'includes/header.php';
+?>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Search Movies</h1>
+    </div>
+    
+    <div class="search-container">
+        <form method="GET" action="search.php" class="search-form">
+            <input type="text" name="q" placeholder="Search by title or genre..." 
+                   value="<?php echo htmlspecialchars($searchTerm); ?>" class="search-input" required>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+    
+    <?php if ($hasSearched): ?>
+        <?php if (!empty($results)): ?>
+            <div class="search-results">
+                <h2>Found <?php echo count($results); ?> result<?php echo count($results) != 1 ? 's' : ''; ?></h2>
+                <div class="movies-grid">
+                    <?php foreach ($results as $movie): ?>
+                        <div class="movie-card">
+                            <a href="movie.php?id=<?php echo urlencode($movie['movie_id']); ?>">
+                                <div class="movie-poster">
+                                    <div class="poster-placeholder">🎬</div>
+                                </div>
+                                <div class="movie-info">
+                                    <h3 class="movie-title"><?php echo htmlspecialchars($movie['title']); ?></h3>
+                                    <?php if ($movie['year']): ?>
+                                        <span class="movie-year"><?php echo htmlspecialchars($movie['year']); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($movie['rating'] > 0): ?>
+                                        <div class="movie-rating">
+                                            <span class="rating-value">⭐ <?php echo number_format($movie['rating'], 1); ?></span>
+                                            <span class="rating-votes">(<?php echo number_format($movie['votes']); ?> votes)</span>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="movie-rating no-rating">No ratings yet</div>
+                                    <?php endif; ?>
+                                </div>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="empty-state">
+                <h2>No results found</h2>
+                <p>Try searching with different keywords.</p>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+</div>
+
+<?php
+$conn->close();
+include 'includes/footer.php';
+?>
+
