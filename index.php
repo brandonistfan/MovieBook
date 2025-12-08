@@ -38,6 +38,7 @@ if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
     }
     $result->close();
     $stmt->close();
+    $stmt = null; // Mark as closed so we don't try to close it again
 } else {
     // Regular pagination mode
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -208,8 +209,13 @@ include 'includes/header.php';
 </div>
 
 <?php
-if (isset($stmt)) {
-    $stmt->close();
+// Only close statement if it exists and hasn't been closed yet
+if (isset($stmt) && $stmt !== null) {
+    try {
+        $stmt->close();
+    } catch (Error $e) {
+        // Statement already closed, ignore
+    }
 }
 $conn->close();
 include 'includes/footer.php';
