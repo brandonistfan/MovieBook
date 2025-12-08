@@ -29,11 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $result = $stmt->get_result();
     
     if ($result->num_rows == 0) {
+        $result->close();
+        $stmt->close();
         $_SESSION['error'] = 'You do not have permission to edit this review.';
         $conn->close();
         header('Location: movie.php?id=' . urlencode($movieId));
         exit;
     }
+    $result->close();
+    $stmt->close();
     
     // Update review
     $updateQuery = "UPDATE reviews SET reviewText = ? WHERE reviewId = ? AND userId = ?";
@@ -45,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $_SESSION['error'] = 'Failed to update review. Please try again.';
     }
-    
+    $stmt->close();
     $conn->close();
     header('Location: movie.php?id=' . urlencode($movieId));
     exit;

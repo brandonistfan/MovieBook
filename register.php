@@ -28,8 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $result = $stmt->get_result();
         
         if ($result->num_rows > 0) {
+            $result->close();
+            $stmt->close();
             $error = 'Email already registered.';
         } else {
+            $result->close();
+            $stmt->close();
             // Hash password (use password_hash in production)
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             
@@ -40,16 +44,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($stmt->execute()) {
                 // Get the newly created user's ID
                 $newUserId = $conn->insert_id;
+                $stmt->close();
                 
                 // Automatically log in the user
                 $_SESSION['userId'] = $newUserId;
                 $_SESSION['username'] = $username;
                 $_SESSION['email'] = $email;
                 
+                $conn->close();
                 // Redirect to home page
                 header('Location: index.php');
                 exit;
             } else {
+                $stmt->close();
                 $error = 'Registration failed. Please try again.';
             }
         }

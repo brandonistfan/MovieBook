@@ -36,6 +36,8 @@ if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
     while ($row = $result->fetch_assoc()) {
         $results[] = $row;
     }
+    $result->close();
+    $stmt->close();
 } else {
     // Regular pagination mode
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -46,6 +48,7 @@ if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
     $countQuery = "SELECT COUNT(*) as total FROM movies";
     $countResult = $conn->query($countQuery);
     $totalMovies = $countResult->fetch_assoc()['total'];
+    $countResult->close();
     $totalPages = ceil($totalMovies / $perPage);
 
     // Get movies with ratings
@@ -64,6 +67,7 @@ if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
     $stmt->bind_param("ii", $perPage, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
+    // Note: $result and $stmt are closed at the end of the file
 }
 
 include 'includes/header.php';

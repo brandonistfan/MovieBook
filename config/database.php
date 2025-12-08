@@ -2,9 +2,9 @@
 // Database configuration
 // CS Server MySQL connection details
 define('DB_HOST', 'mysql01.cs.virginia.edu');  // CS server hostname
-define('DB_USER', 'qzp2wv');        // computing ID
+define('DB_USER', 'trs2wd');        // computing ID
 define('DB_PASS', 'Fall2025');   // CS MySQL password
-define('DB_NAME', 'qzp2wv');        // computing ID
+define('DB_NAME', 'trs2wd');        // computing ID
 
 
 // Create database connection

@@ -27,6 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $result = $stmt->get_result();
     
     if ($result->num_rows == 0) {
+        $result->close();
+        $stmt->close();
         $_SESSION['error'] = 'You do not have permission to delete this review.';
         $conn->close();
         header('Location: index.php');
@@ -35,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     $review = $result->fetch_assoc();
     $movieId = $review['movieId'];
+    $result->close();
+    $stmt->close();
     
     // Delete review
     $deleteQuery = "DELETE FROM reviews WHERE reviewId = ? AND userId = ?";
@@ -46,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $_SESSION['error'] = 'Failed to delete review. Please try again.';
     }
-    
+    $stmt->close();
     $conn->close();
     header('Location: movie.php?id=' . urlencode($movieId));
     exit;

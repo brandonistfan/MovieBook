@@ -24,9 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // In production, use password_verify() with hashed passwords
             // For now, assuming passwords are stored as plain text (you should hash them)
             if ($password === $user['password'] || password_verify($password, $user['password'])) {
+                $result->close();
+                $stmt->close();
                 $_SESSION['userId'] = $user['userId'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
+                $conn->close();
                 header('Location: index.php');
                 exit;
             } else {
@@ -35,6 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $error = 'Invalid email or password.';
         }
+        $result->close();
+        $stmt->close();
         $conn->close();
     }
 }

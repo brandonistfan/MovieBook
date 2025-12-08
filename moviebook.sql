@@ -1,6 +1,6 @@
-CREATE DATABASE qzp2wv;
+CREATE DATABASE trs2wd;
 
-USE qzp2wv;
+USE trs2wd;
 
 CREATE TABLE users (
     username VARCHAR(255) NOT NULL,

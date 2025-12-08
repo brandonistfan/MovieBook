@@ -22,6 +22,8 @@ $stmt->bind_param("i", $movieId);
 $stmt->execute();
 $movieResult = $stmt->get_result();
 $movie = $movieResult->fetch_assoc();
+$movieResult->close();
+$stmt->close();
 
 if (!$movie) {
     header('Location: index.php');
@@ -42,6 +44,8 @@ $directors = [];
 while ($row = $directorsResult->fetch_assoc()) {
     $directors[] = $row['name'];
 }
+$directorsResult->close();
+$stmt->close();
 
 // Get actors
 $actorsQuery = "SELECT p.name FROM movie_actors ma
@@ -56,6 +60,8 @@ $actors = [];
 while ($row = $actorsResult->fetch_assoc()) {
     $actors[] = $row['name'];
 }
+$actorsResult->close();
+$stmt->close();
 
 // Get genres
 $genresQuery = "SELECT g.genreName AS genre FROM movie_genres mg
@@ -69,6 +75,8 @@ $genres = [];
 while ($row = $genresResult->fetch_assoc()) {
     $genres[] = $row['genre'];
 }
+$genresResult->close();
+$stmt->close();
 
 // Get reviews
 $reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username, r.userId
@@ -84,6 +92,8 @@ $reviews = [];
 while ($row = $reviewsResult->fetch_assoc()) {
 $reviews[] = $row;
 }
+$reviewsResult->close();
+$stmt->close();
 
 // Check if user has already reviewed this movie
 $userHasReviewed = false;
@@ -94,6 +104,8 @@ if (isset($_SESSION['userId'])) {
     $stmt->execute();
     $checkResult = $stmt->get_result();
     $userHasReviewed = $checkResult->num_rows > 0;
+    $checkResult->close();
+    $stmt->close();
 }
 
 include 'includes/header.php';

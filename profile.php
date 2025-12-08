@@ -24,6 +24,8 @@ $reviews = [];
 while ($row = $reviewsResult->fetch_assoc()) {
     $reviews[] = $row;
 }
+$reviewsResult->close();
+$stmt->close();
 
 // Get user's ratings count
 $ratingsQuery = "SELECT COUNT(*) as ratingCount FROM ratings WHERE userId = ?";
@@ -33,6 +35,8 @@ $stmt->execute();
 $ratingsResult = $stmt->get_result();
 $ratingsData = $ratingsResult->fetch_assoc();
 $ratingCount = $ratingsData['ratingCount'] ?? 0;
+$ratingsResult->close();
+$stmt->close();
 
 $reviewCount = count($reviews);
 

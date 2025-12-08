@@ -28,10 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $result = $stmt->get_result();
     
     if ($result->num_rows > 0) {
+        $result->close();
+        $stmt->close();
         $_SESSION['error'] = 'You have already reviewed this movie.';
+        $conn->close();
         header('Location: movie.php?id=' . urlencode($movieId));
         exit;
     }
+    $result->close();
+    $stmt->close();
     
     // Insert review
     $insertQuery = "INSERT INTO reviews (movieId, userId, reviewText) VALUES (?, ?, ?)";
@@ -43,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $_SESSION['error'] = 'Failed to submit review. Please try again.';
     }
-    
+    $stmt->close();
     $conn->close();
     header('Location: movie.php?id=' . urlencode($movieId));
     exit;
