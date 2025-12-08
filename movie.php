@@ -10,13 +10,13 @@ if ($movieId <= 0) {
 $conn = getDBConnection();
 
 // Get movie details
-$movieQuery = "SELECT m.movieId, m.title, m.description,
+$movieQuery = "SELECT m.movieId, m.title, m.description, m.releaseYear, m.runtimeMinutes,
                COALESCE(AVG(r.rating), 0) AS rating,
                COUNT(r.ratingId) AS votes
                FROM movies m
                LEFT JOIN ratings r ON m.movieId = r.movieId
                WHERE m.movieId = ?
-               GROUP BY m.movieId, m.title, m.description";
+               GROUP BY m.movieId, m.title, m.description, m.releaseYear, m.runtimeMinutes";
 $stmt = $conn->prepare($movieQuery);
 if (!$stmt) {
     $conn->close();
@@ -130,6 +130,24 @@ include 'includes/header.php';
             </div>
             <div class="movie-details">
                 <h1><?php echo htmlspecialchars($movie['title']); ?></h1>
+                
+                <div class="movie-meta-info">
+                    <?php if (!empty($movie['releaseYear'])): ?>
+                        <span class="meta-item"><strong>Year:</strong> <?php echo htmlspecialchars($movie['releaseYear']); ?></span>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($movie['runtimeMinutes'])): ?>
+                        <span class="meta-item"><strong>Runtime:</strong> <?php 
+                            $hours = floor($movie['runtimeMinutes'] / 60);
+                            $minutes = $movie['runtimeMinutes'] % 60;
+                            if ($hours > 0) {
+                                echo $hours . 'h ' . $minutes . 'm';
+                            } else {
+                                echo $minutes . 'm';
+                            }
+                        ?></span>
+                    <?php endif; ?>
+                </div>
                 
                 <?php if (!empty($movie['description'])): ?>
                     <p class="movie-description"><?php echo nl2br(htmlspecialchars($movie['description'])); ?></p>
