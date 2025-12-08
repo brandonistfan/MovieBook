@@ -101,39 +101,6 @@ while ($row = $genresResult->fetch_assoc()) {
 $genresResult->close();
 $stmt->close();
 
-$genreEmojis = [
-    'Action' => '⚔️',
-    'Adult' => '🔞',
-    'Adventure' => '🧭',
-    'Animation' => '🎨',
-    'Biography' => '🧑‍💼',
-    'Comedy' => '😂',
-    'Crime' => '🕵️',
-    'Documentary' => '🎥',
-    'Drama' => '🎭',
-    'Family' => '👨‍👩‍👧‍👦',
-    'Fantasy' => '🧚',
-    'Film-Noir' => '🌒',
-    'Game-Show' => '🎲',
-    'History' => '📜',
-    'Horror' => '😱',
-    'Music' => '🎵',
-    'Musical' => '🎼',
-    'Mystery' => '🕯️',
-    'News' => '📰',
-    'Reality-TV' => '📺',
-    'Romance' => '💕',
-    'Sci-Fi' => '🛸',
-    'Short' => '⏱️',
-    'Sport' => '🏅',
-    'Talk-Show' => '🎙️',
-    'Thriller' => '😨',
-    'War' => '⚔️',
-    'Western' => '🤠',
-];
-$firstGenre = $genres[0] ?? null;
-$genreEmoji = $genreEmojis[$firstGenre] ?? '🎬';
-
 // Get reviews with ratings
 $reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username, r.userId, 
                  rat.rating
@@ -173,10 +140,7 @@ include 'includes/header.php';
     <div class="movie-detail">
         <div class="movie-header">
             <div class="movie-poster-large">
-                <?php $posterLabel = ($firstGenre ?? 'Movie') . ' poster'; ?>
-                <div class="poster-placeholder-large" role="img" aria-label="<?php echo htmlspecialchars($posterLabel); ?>">
-                    <?php echo $genreEmoji; ?>
-                </div>
+                <div class="poster-placeholder-large">🎬</div>
             </div>
             <div class="movie-details">
                 <h1><?php echo htmlspecialchars($movie['title']); ?></h1>

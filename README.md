@@ -8,5 +8,5 @@ MovieBook is a very small PHP/MySQL app where people can register, log in, and l
 
 ## How to run
 1. Import `moviebook.sql` into your MySQL database (`mysql -u user -p < moviebook.sql`).
-2. Leave `config/database.php` as is.
+2. Update `config/database.php` with your database host, username, password, and DB name.
 3. Start a dev server from the project root with `php -S localhost:8000` and visit `http://localhost:8000` in your browser.
