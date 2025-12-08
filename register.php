@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['userId'] = $newUserId;
                 $_SESSION['username'] = $username;
                 $_SESSION['email'] = $email;
+                $_SESSION['role'] = 'user';
                 
                 $conn->close();
                 // Redirect to home page

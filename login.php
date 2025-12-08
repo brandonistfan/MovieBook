@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'Please fill in all fields.';
     } else {
         $conn = getDBConnection();
-        $query = "SELECT userId, username, email, password FROM users WHERE email = ?";
+
+        $query = "SELECT userId, username, email, password, role FROM users WHERE email = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -29,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['userId'] = $user['userId'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
+                $_SESSION['role'] = $user['role'] ?? 'user';
                 $conn->close();
                 header('Location: index.php');
                 exit;

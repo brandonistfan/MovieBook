@@ -17,7 +17,7 @@ if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
     $query = "SELECT m.movieId, m.title, m.description,
               GROUP_CONCAT(DISTINCT g.genreName ORDER BY g.genreName SEPARATOR ', ') AS genres,
               COALESCE(AVG(r.rating), 0) AS rating,
-              COUNT(r.ratingId) AS votes
+              COUNT(DISTINCT r.ratingId) AS votes
               FROM movies m
               LEFT JOIN movie_genres mg ON m.movieId = mg.movieId
               LEFT JOIN genres g ON mg.genreId = g.genreId
@@ -56,7 +56,7 @@ if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
     $query = "SELECT m.movieId, m.title, m.description,
               GROUP_CONCAT(DISTINCT g.genreName ORDER BY g.genreName SEPARATOR ', ') AS genres,
               COALESCE(AVG(r.rating), 0) AS rating,
-              COUNT(r.ratingId) AS votes
+              COUNT(DISTINCT r.ratingId) AS votes
               FROM movies m
               LEFT JOIN movie_genres mg ON m.movieId = mg.movieId
               LEFT JOIN genres g ON mg.genreId = g.genreId

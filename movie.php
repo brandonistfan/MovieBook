@@ -9,10 +9,22 @@ if ($movieId <= 0) {
 
 $conn = getDBConnection();
 
+if (isset($_SESSION['userId']) && !isset($_SESSION['role'])) {
+    $roleStmt = $conn->prepare("SELECT role FROM users WHERE userId = ?");
+    $roleStmt->bind_param("i", $_SESSION['userId']);
+    $roleStmt->execute();
+    $roleResult = $roleStmt->get_result();
+    if ($roleRow = $roleResult->fetch_assoc()) {
+        $_SESSION['role'] = $roleRow['role'] ?? 'user';
+    }
+    $roleResult->close();
+    $roleStmt->close();
+}
+
 // Get movie details
 $movieQuery = "SELECT m.movieId, m.title, m.description, m.releaseYear, m.runtimeMinutes,
                COALESCE(AVG(r.rating), 0) AS rating,
-               COUNT(r.ratingId) AS votes
+               COUNT(DISTINCT r.ratingId) AS votes
                FROM movies m
                LEFT JOIN ratings r ON m.movieId = r.movieId
                WHERE m.movieId = ?
@@ -89,10 +101,12 @@ while ($row = $genresResult->fetch_assoc()) {
 $genresResult->close();
 $stmt->close();
 
-// Get reviews
-$reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username, r.userId
+// Get reviews with ratings
+$reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username, r.userId, 
+                 rat.rating
                  FROM reviews r
                  JOIN users u ON r.userId = u.userId
+                 LEFT JOIN ratings rat ON r.movieId = rat.movieId AND r.userId = rat.userId
                  WHERE r.movieId = ?
                  ORDER BY r.createdAt DESC";
 $stmt = $conn->prepare($reviewsQuery);
@@ -197,13 +211,42 @@ include 'includes/header.php';
             <?php endif; ?>
             
             <?php if (isset($_SESSION['userId'])): ?>
-                <?php if (!$userHasReviewed): ?>
+                <?php if (($_SESSION['role'] ?? 'user') === 'restricted'): ?>
+                    <div class="info-message">
+                        Your account is restricted from creating reviews.
+                    </div>
+                <?php elseif (!$userHasReviewed): ?>
                     <div class="review-form-container">
                         <h3>Write a Review</h3>
-                        <form action="submit_review.php" method="POST" class="review-form">
+                        <form action="submit_review.php" method="POST" class="review-form" id="review-form">
                             <input type="hidden" name="movieId" value="<?php echo htmlspecialchars($movieId); ?>">
-                            <textarea name="reviewText" rows="5" placeholder="Share your thoughts about this movie..." required></textarea>
-                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                            
+                            <div class="form-group">
+                                <label for="rating">Your Rating *</label>
+                                <div class="star-rating-input">
+                                    <input type="hidden" name="rating" id="rating-value" value="0" required>
+                                    <div class="star-rating-interactive" id="star-rating">
+                                        <span class="star" data-rating="1">☆</span>
+                                        <span class="star" data-rating="2">☆</span>
+                                        <span class="star" data-rating="3">☆</span>
+                                        <span class="star" data-rating="4">☆</span>
+                                        <span class="star" data-rating="5">☆</span>
+                                        <span class="star" data-rating="6">☆</span>
+                                        <span class="star" data-rating="7">☆</span>
+                                        <span class="star" data-rating="8">☆</span>
+                                        <span class="star" data-rating="9">☆</span>
+                                        <span class="star" data-rating="10">☆</span>
+                                    </div>
+                                    <div class="rating-display" id="rating-display">Click to rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reviewText">Your Review *</label>
+                                <textarea name="reviewText" id="reviewText" rows="5" placeholder="Share your thoughts about this movie..." required></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Submit Review & Rating</button>
                         </form>
                     </div>
                 <?php else: ?>
@@ -224,23 +267,54 @@ include 'includes/header.php';
                             <div class="review-header">
                                 <div>
                                     <strong><?php echo htmlspecialchars($review['username']); ?></strong>
+                                    <?php if (!empty($review['rating'])): ?>
+                                        <span class="user-rating">⭐ <?php echo htmlspecialchars($review['rating']); ?>/10</span>
+                                    <?php endif; ?>
                                     <span class="review-date"><?php echo date('F j, Y', strtotime($review['createdAt'])); ?></span>
                                 </div>
-                                <?php if (isset($_SESSION['userId']) && $_SESSION['userId'] == $review['userId']): ?>
+                                <?php
+                                    $currentRole = $_SESSION['role'] ?? 'user';
+                                    $isOwner = isset($_SESSION['userId']) && $_SESSION['userId'] == $review['userId'];
+                                    $canEdit = isset($_SESSION['userId']) && $currentRole !== 'restricted' && $isOwner; // admin cannot edit others
+                                    $canDelete = isset($_SESSION['userId']) && $currentRole !== 'restricted' && ($isOwner || $currentRole === 'admin');
+                                ?>
+                                <?php if ($canEdit || $canDelete): ?>
                                     <div class="review-actions">
-                                        <button type="button" class="btn-edit" data-review-id="<?php echo $review['reviewId']; ?>">Edit</button>
-                                        <button type="button" class="btn-delete" data-review-id="<?php echo $review['reviewId']; ?>">Delete</button>
+                                        <?php if ($canEdit): ?>
+                                            <button type="button" class="btn-edit" data-review-id="<?php echo $review['reviewId']; ?>">Edit</button>
+                                        <?php endif; ?>
+                                        <?php if ($canDelete): ?>
+                                            <button type="button" class="btn-delete" data-review-id="<?php echo $review['reviewId']; ?>">Delete</button>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
                             <div class="review-text" id="review-text-<?php echo $review['reviewId']; ?>">
                                 <?php echo nl2br(htmlspecialchars($review['reviewText'])); ?>
                             </div>
-                            <div class="review-edit-form" id="review-edit-form-<?php echo $review['reviewId']; ?>" style="display: none;" data-original-text="<?php echo htmlspecialchars($review['reviewText'], ENT_QUOTES); ?>">
-                                <form action="edit_review.php" method="POST" class="review-edit-form-inner">
+                            <div class="review-edit-form" id="review-edit-form-<?php echo $review['reviewId']; ?>" style="display: none;" data-original-text="<?php echo htmlspecialchars($review['reviewText'], ENT_QUOTES); ?>" data-original-rating="<?php echo htmlspecialchars($review['rating'] ?? 0); ?>">
+                                <form action="edit_review.php" method="POST" class="review-edit-form-inner" data-review-id="<?php echo $review['reviewId']; ?>">
                                     <input type="hidden" name="reviewId" value="<?php echo $review['reviewId']; ?>">
                                     <input type="hidden" name="movieId" value="<?php echo htmlspecialchars($movieId); ?>">
-                                    <textarea name="reviewText" rows="5" required><?php echo htmlspecialchars($review['reviewText']); ?></textarea>
+                                    
+                                    <div class="form-group">
+                                        <label>Your Rating *</label>
+                                        <div class="star-rating-input">
+                                            <input type="hidden" name="rating" class="rating-value-edit" value="<?php echo htmlspecialchars($review['rating'] ?? 0); ?>" required>
+                                            <div class="star-rating-interactive star-rating-edit" data-review-id="<?php echo $review['reviewId']; ?>">
+                                                <?php for ($i = 1; $i <= 10; $i++): ?>
+                                                    <span class="star <?php echo ($i <= ($review['rating'] ?? 0)) ? 'active' : ''; ?>" data-rating="<?php echo $i; ?>"><?php echo ($i <= ($review['rating'] ?? 0)) ? '★' : '☆'; ?></span>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <div class="rating-display rating-display-edit"><?php echo $review['rating'] ? $review['rating'] . ' / 10' : 'Click to rate'; ?></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Your Review *</label>
+                                        <textarea name="reviewText" rows="5" required><?php echo htmlspecialchars($review['reviewText']); ?></textarea>
+                                    </div>
+                                    
                                     <div class="review-edit-actions">
                                         <button type="submit" class="btn btn-primary">Save</button>
                                         <button type="button" class="btn btn-cancel" data-review-id="<?php echo $review['reviewId']; ?>">Cancel</button>
