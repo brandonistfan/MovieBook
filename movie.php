@@ -71,7 +71,7 @@ while ($row = $genresResult->fetch_assoc()) {
 }
 
 // Get reviews
-$reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username
+$reviewsQuery = "SELECT r.reviewId, r.reviewText, r.createdAt, u.username, r.userId
                  FROM reviews r
                  JOIN users u ON r.userId = u.userId
                  WHERE r.movieId = ?
@@ -179,13 +179,32 @@ include 'includes/header.php';
             <div class="reviews-list">
                 <?php if (!empty($reviews)): ?>
                     <?php foreach ($reviews as $review): ?>
-                        <div class="review-card">
+                        <div class="review-card" id="review-<?php echo $review['reviewId']; ?>">
                             <div class="review-header">
-                                <strong><?php echo htmlspecialchars($review['username']); ?></strong>
-                                <span class="review-date"><?php echo date('F j, Y', strtotime($review['createdAt'])); ?></span>
+                                <div>
+                                    <strong><?php echo htmlspecialchars($review['username']); ?></strong>
+                                    <span class="review-date"><?php echo date('F j, Y', strtotime($review['createdAt'])); ?></span>
+                                </div>
+                                <?php if (isset($_SESSION['userId']) && $_SESSION['userId'] == $review['userId']): ?>
+                                    <div class="review-actions">
+                                        <button type="button" class="btn-edit" data-review-id="<?php echo $review['reviewId']; ?>">Edit</button>
+                                        <button type="button" class="btn-delete" data-review-id="<?php echo $review['reviewId']; ?>">Delete</button>
+                                    </div>
+                                <?php endif; ?>
                             </div>
-                            <div class="review-text">
+                            <div class="review-text" id="review-text-<?php echo $review['reviewId']; ?>">
                                 <?php echo nl2br(htmlspecialchars($review['reviewText'])); ?>
+                            </div>
+                            <div class="review-edit-form" id="review-edit-form-<?php echo $review['reviewId']; ?>" style="display: none;" data-original-text="<?php echo htmlspecialchars($review['reviewText'], ENT_QUOTES); ?>">
+                                <form action="edit_review.php" method="POST" class="review-edit-form-inner">
+                                    <input type="hidden" name="reviewId" value="<?php echo $review['reviewId']; ?>">
+                                    <input type="hidden" name="movieId" value="<?php echo htmlspecialchars($movieId); ?>">
+                                    <textarea name="reviewText" rows="5" required><?php echo htmlspecialchars($review['reviewText']); ?></textarea>
+                                    <div class="review-edit-actions">
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                        <button type="button" class="btn btn-cancel" data-review-id="<?php echo $review['reviewId']; ?>">Cancel</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     <?php endforeach; ?>
