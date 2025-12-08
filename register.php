@@ -38,7 +38,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("sss", $username, $email, $hashedPassword);
             
             if ($stmt->execute()) {
-                $success = 'Registration successful! You can now <a href="login.php">login</a>.';
+                // Get the newly created user's ID
+                $newUserId = $conn->insert_id;
+                
+                // Automatically log in the user
+                $_SESSION['userId'] = $newUserId;
+                $_SESSION['username'] = $username;
+                $_SESSION['email'] = $email;
+                
+                // Redirect to home page
+                header('Location: index.php');
+                exit;
             } else {
                 $error = 'Registration failed. Please try again.';
             }

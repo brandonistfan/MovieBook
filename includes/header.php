@@ -14,7 +14,6 @@
             </div>
             <div class="nav-menu">
                 <a href="index.php">Home</a>
-                <a href="search.php">Search</a>
                 <?php if (isset($_SESSION['userId'])): ?>
                     <a href="profile.php">Profile</a>
                     <a href="logout.php">Logout (<?php echo htmlspecialchars($_SESSION['username']); ?>)</a>
