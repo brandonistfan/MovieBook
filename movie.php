@@ -18,14 +18,25 @@ $movieQuery = "SELECT m.movieId, m.title, m.description,
                WHERE m.movieId = ?
                GROUP BY m.movieId, m.title, m.description";
 $stmt = $conn->prepare($movieQuery);
+if (!$stmt) {
+    $conn->close();
+    header('Location: index.php');
+    exit;
+}
 $stmt->bind_param("i", $movieId);
-$stmt->execute();
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    header('Location: index.php');
+    exit;
+}
 $movieResult = $stmt->get_result();
 $movie = $movieResult->fetch_assoc();
 $movieResult->close();
 $stmt->close();
 
 if (!$movie) {
+    $conn->close();
     header('Location: index.php');
     exit;
 }
