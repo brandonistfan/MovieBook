@@ -7,6 +7,69 @@ $results = [];
 $searchTerm = '';
 $hasSearched = false;
 $isSearchMode = false;
+$genreIcons = [
+    'action' => '&#128165;',
+    'adult' => '&#128286;',
+    'adventure' => '&#129517;',
+    'animation' => '&#127912;',
+    'biography' => '&#128220;',
+    'comedy' => '&#128514;',
+    'crime' => '&#128373;',
+    'documentary' => '&#127909;',
+    'drama' => '&#127917;',
+    'family' => '&#128106;',
+    'fantasy' => '&#128009;',
+    'film-noir' => '&#128374;',
+    'game-show' => '&#127918;',
+    'history' => '&#127963;',
+    'horror' => '&#128123;',
+    'music' => '&#127925;',
+    'musical' => '&#127926;',
+    'mystery' => '&#128269;',
+    'news' => '&#128240;',
+    'reality-tv' => '&#128250;',
+    'romance' => '&#10084;',
+    'sci-fi' => '&#128640;',
+    'short' => '&#9201;',
+    'sport' => '&#127942;',
+    'talk-show' => '&#127897;',
+    'thriller' => '&#128561;',
+    'war' => '&#9876;',
+    'western' => '&#129312;',
+];
+
+function parseGenreList($genreList)
+{
+    if (empty($genreList)) {
+        return [];
+    }
+    $parts = explode(',', $genreList);
+    $genres = [];
+    foreach ($parts as $part) {
+        $trimmed = trim($part);
+        if ($trimmed !== '') {
+            $genres[] = $trimmed;
+        }
+    }
+    return $genres;
+}
+
+function getPosterEmoji($genreList, $genreIcons)
+{
+    $genres = parseGenreList($genreList);
+    $firstGenre = $genres[0] ?? null;
+    $key = $firstGenre ? strtolower($firstGenre) : '';
+    return $genreIcons[$key] ?? '&#127916;';
+}
+
+function getPosterLabel($genreList)
+{
+    $genres = parseGenreList($genreList);
+    $firstGenre = $genres[0] ?? null;
+    return ($firstGenre ?: 'Movie') . ' poster';
+}
+
+
 
 // Check if we have a search query
 if (isset($_GET['q']) && !empty(trim($_GET['q']))) {
@@ -98,10 +161,16 @@ include 'includes/header.php';
                     <h2>Found <?php echo count($results); ?> result<?php echo count($results) != 1 ? 's' : ''; ?></h2>
                     <div class="movies-grid">
                         <?php foreach ($results as $movie): ?>
+                            <?php
+                                $posterEmoji = getPosterEmoji($movie['genres'], $genreIcons);
+                                $posterLabel = getPosterLabel($movie['genres']);
+                            ?>
                             <div class="movie-card">
                                 <a href="movie.php?id=<?php echo urlencode($movie['movieId']); ?>">
                                     <div class="movie-poster">
-                                        <div class="poster-placeholder">🎬</div>
+                                        <div class="poster-placeholder" role="img" aria-label="<?php echo htmlspecialchars($posterLabel); ?>">
+                                            <?php echo $posterEmoji; ?>
+                                        </div>
                                     </div>
                                     <div class="movie-info">
                                         <h3 class="movie-title"><?php echo htmlspecialchars($movie['title']); ?></h3>
@@ -147,10 +216,16 @@ include 'includes/header.php';
     <?php elseif ($result && $result->num_rows > 0): ?>
         <div class="movies-grid">
             <?php while ($movie = $result->fetch_assoc()): ?>
+                <?php
+                    $posterEmoji = getPosterEmoji($movie['genres'], $genreIcons);
+                    $posterLabel = getPosterLabel($movie['genres']);
+                ?>
                 <div class="movie-card">
                     <a href="movie.php?id=<?php echo urlencode($movie['movieId']); ?>">
                         <div class="movie-poster">
-                            <div class="poster-placeholder">🎬</div>
+                            <div class="poster-placeholder" role="img" aria-label="<?php echo htmlspecialchars($posterLabel); ?>">
+                                <?php echo $posterEmoji; ?>
+                            </div>
                         </div>
                         <div class="movie-info">
                             <h3 class="movie-title"><?php echo htmlspecialchars($movie['title']); ?></h3>
