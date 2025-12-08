@@ -120,7 +120,7 @@ include 'includes/header.php';
                                                 <span class="rating-votes">(<?php echo number_format($movie['votes']); ?> ratings)</span>
                                             </div>
                                         <?php else: ?>
-                                            <div class="movie-rating no-rating">No ratings yet</div>
+                                            <div class="movie-rating no-rating">⭐ <?php echo number_format($movie['votes']); ?> ratings</div>
                                         <?php endif; ?>
                                         <?php if (!empty($movie['description'])): ?>
                                             <p class="movie-description">
@@ -169,7 +169,7 @@ include 'includes/header.php';
                                     <span class="rating-votes">(<?php echo number_format($movie['votes']); ?> ratings)</span>
                                 </div>
                             <?php else: ?>
-                                <div class="movie-rating no-rating">No ratings yet</div>
+                                <div class="movie-rating no-rating">⭐ <?php echo number_format($movie['votes']); ?> ratings</div>
                             <?php endif; ?>
                             <?php if (!empty($movie['description'])): ?>
                                 <p class="movie-description">

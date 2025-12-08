@@ -179,7 +179,7 @@ include 'includes/header.php';
                         <span class="rating-votes">(<?php echo number_format($movie['votes']); ?> ratings)</span>
                     </div>
                 <?php else: ?>
-                    <div class="movie-rating-large no-rating">No ratings yet</div>
+                    <div class="movie-rating-large no-rating">⭐ <?php echo number_format($movie['votes']); ?> ratings</div>
                 <?php endif; ?>
             </div>
         </div>
